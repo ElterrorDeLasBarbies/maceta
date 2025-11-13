@@ -36,26 +36,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rutas
+// Rutas API
 app.use('/api/macetas', macetasRoutes);
 app.use('/api/sensor-data', sensorRoutes);
 app.use('/api/riego', riegoRoutes);
 
-// Ruta raíz
-app.get('/', (req, res) => {
-  res.json({
-    message: '🌱 API Sistema de Riego Inteligente IoT',
-    version: '1.0.0',
-    endpoints: {
-      macetas: '/api/macetas',
-      sensorData: '/api/sensor-data',
-      riego: '/api/riego'
-    }
-  });
-});
-
 // Ruta de health check
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
@@ -65,12 +52,27 @@ app.get('/health', (req, res) => {
 
 // Servir frontend en producción
 if (process.env.NODE_ENV === 'production') {
+  // Servir archivos estáticos del frontend
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
   
+  // Todas las rutas no-API devuelven el index.html (SPA)
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
   });
 } else {
+  // En desarrollo, ruta raíz muestra info de la API
+  app.get('/', (req, res) => {
+    res.json({
+      message: '🌱 API Sistema de Riego Inteligente IoT',
+      version: '1.0.0',
+      endpoints: {
+        macetas: '/api/macetas',
+        sensorData: '/api/sensor-data',
+        riego: '/api/riego'
+      }
+    });
+  });
+  
   // Manejo de rutas no encontradas en desarrollo
   app.use((req, res) => {
     res.status(404).json({ error: 'Endpoint no encontrado' });
