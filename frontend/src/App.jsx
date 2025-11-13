@@ -11,25 +11,61 @@ function App() {
   const [maceta, setMaceta] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [retryCount, setRetryCount] = useState(0)
+  const [pollInterval, setPollInterval] = useState(300000) // 5 minutos (300000 ms)
 
-  // Cargar datos al iniciar
+  // Cargar datos al iniciar con intervalo dinámico
   useEffect(() => {
     fetchMaceta()
-    // Actualizar cada 10 segundos
-    const interval = setInterval(fetchMaceta, 10000)
+    
+    // Intervalo que se ajusta según los errores
+    const interval = setInterval(fetchMaceta, pollInterval)
     return () => clearInterval(interval)
-  }, [])
+  }, [pollInterval])
 
   const fetchMaceta = async () => {
     try {
       // Obtener info básica de la maceta
       const response = await fetch(`${API_URL}/macetas/${MACETA_ID}`)
-      if (!response.ok) throw new Error('Error al cargar maceta')
+      
+      // Manejar rate limiting (429)
+      if (response.status === 429) {
+        const newRetryCount = retryCount + 1
+        setRetryCount(newRetryCount)
+        
+        // Aumentar intervalo exponencialmente: 5min -> 10min -> 15min
+        const newInterval = Math.min(300000 * Math.pow(2, newRetryCount), 900000) // máximo 15 min
+        setPollInterval(newInterval)
+        
+        console.warn(`Rate limit alcanzado. Aumentando intervalo a ${newInterval/60000} minutos`)
+        throw new Error('Demasiadas peticiones. Reduciendo frecuencia...')
+      }
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
+      
       const result = await response.json()
       
       // Obtener estado actual
       const estadoRes = await fetch(`${API_URL}/macetas/${MACETA_ID}/estado`)
-      const estadoData = await estadoRes.json()
+      
+      if (estadoRes.status === 429) {
+        const newRetryCount = retryCount + 1
+        setRetryCount(newRetryCount)
+        
+        const newInterval = Math.min(300000 * Math.pow(2, newRetryCount), 900000) // máximo 15 min
+        setPollInterval(newInterval)
+        
+        console.warn(`Rate limit alcanzado. Aumentando intervalo a ${newInterval/60000} minutos`)
+        throw new Error('Demasiadas peticiones. Reduciendo frecuencia...')
+      }
+      
+      if (!estadoRes.ok) {
+        console.warn('Error obteniendo estado, usando datos básicos')
+      }
+      
+      const estadoData = estadoRes.ok ? await estadoRes.json() : { data: {} }
       
       // Extraer datos de la última lectura
       const ultimaLectura = estadoData.data?.ultima_lectura || {}
@@ -39,9 +75,22 @@ function App() {
         estado: ultimaLectura
       })
       setError(null)
+      
+      // Éxito: resetear contador y volver al intervalo normal
+      if (retryCount > 0) {
+        setRetryCount(0)
+        setPollInterval(300000) // Volver a 5 minutos
+        console.log('Conexión restablecida. Intervalo normalizado a 5 minutos')
+      }
     } catch (err) {
-      console.error('Error:', err)
+      console.error('Error fetching maceta:', err)
       setError(err.message)
+      
+      // Si hay demasiados errores consecutivos, aumentar aún más el intervalo
+      if (retryCount >= 3) {
+        setPollInterval(900000) // 15 minutos si hay muchos errores
+        console.warn('Múltiples errores consecutivos. Intervalo aumentado a 15 minutos')
+      }
     } finally {
       setLoading(false)
     }

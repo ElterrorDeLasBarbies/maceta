@@ -35,7 +35,7 @@ DHT dht(DHT_PIN, DHT_TYPE);
 // ======================================
 // CONFIGURACIÓN Tiempos
 // ======================================
-const unsigned long INTERVALO_LECTURA = 30000; // 30 segundos
+const unsigned long INTERVALO_LECTURA = 300000; // 5 minutos (300000 ms)
 unsigned long ultimaLectura = 0;
 
 void setup() {

@@ -21,9 +21,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Rate Limiter - Prevenir abuso de API
+// Más permisivo para permitir polling frecuente del frontend
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100 // límite de 100 requests por ventana
+  max: 200, // límite de 200 requests por ventana (aumentado)
+  message: { 
+    success: false, 
+    error: 'Demasiadas peticiones. Por favor, espera un momento.' 
+  },
+  standardHeaders: true, // Retornar info en headers `RateLimit-*`
+  legacyHeaders: false, // Deshabilitar headers `X-RateLimit-*`
 });
 
 // Middlewares
