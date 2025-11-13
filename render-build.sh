@@ -10,13 +10,13 @@ ls -la
 echo ""
 echo "📦 Installing backend dependencies..."
 cd backend
-npm ci --production=false
+npm install --production=false
 cd ..
 
 echo ""
 echo "📦 Installing frontend dependencies..."
 cd frontend
-npm ci --production=false
+npm install --production=false
 
 echo ""
 echo "🏗️  Building frontend..."
