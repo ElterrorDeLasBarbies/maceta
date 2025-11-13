@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import macetasRoutes from './routes/macetas.js';
 import sensorRoutes from './routes/sensor.js';
 import riegoRoutes from './routes/riego.js';
+import { testConnection } from './config/database.js';
 
 // Configuración
 dotenv.config();
@@ -89,7 +90,7 @@ app.use((err, req, res, next) => {
 });
 
 // Iniciar servidor
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`
 ╔═══════════════════════════════════════════╗
 ║  🌱 Servidor Backend Iniciado             ║
@@ -98,6 +99,14 @@ app.listen(PORT, () => {
 ║  Supabase: ${process.env.SUPABASE_URL ? '✓ Conectado' : '✗ No configurado'}    ║
 ╚═══════════════════════════════════════════╝
   `);
+
+  // Test database connection
+  const dbTest = await testConnection();
+  if (dbTest.success) {
+    console.log('✓ Conexión a base de datos verificada');
+  } else {
+    console.error('✗ Error de conexión a base de datos:', dbTest.message);
+  }
 });
 
 export default app;

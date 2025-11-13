@@ -31,6 +31,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`[DEBUG] Buscando maceta con ID: ${id}`);
 
     const { data, error } = await supabase
       .from('macetas')
@@ -38,17 +39,39 @@ router.get('/:id', async (req, res) => {
       .eq('id', id)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[ERROR] Error de Supabase:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      throw error;
+    }
 
+    if (!data) {
+      console.log(`[DEBUG] No se encontró maceta con ID: ${id}`);
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Maceta no encontrada' 
+      });
+    }
+
+    console.log(`[DEBUG] Maceta encontrada:`, data);
     res.json({ 
       success: true, 
       data 
     });
   } catch (error) {
-    console.error('Error obteniendo maceta:', error);
+    console.error('[ERROR] Error obteniendo maceta:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
     res.status(error.code === 'PGRST116' ? 404 : 500).json({ 
       success: false, 
-      error: error.message 
+      error: error.message,
+      details: process.env.NODE_ENV === 'production' ? undefined : error.stack
     });
   }
 });
@@ -152,6 +175,8 @@ router.get('/:id/datos', async (req, res) => {
     const { id } = req.params;
     const { limit = 100, hours = 24 } = req.query;
 
+    console.log(`[DEBUG] Obteniendo datos históricos para maceta: ${id}, últimas ${hours} horas`);
+
     // Calcular timestamp para filtrar
     const timeAgo = new Date();
     timeAgo.setHours(timeAgo.getHours() - parseInt(hours));
@@ -164,8 +189,16 @@ router.get('/:id/datos', async (req, res) => {
       .order('timestamp', { ascending: false })
       .limit(parseInt(limit));
 
-    if (error) throw error;
+    if (error) {
+      console.error('[ERROR] Error obteniendo datos históricos:', {
+        message: error.message,
+        code: error.code,
+        details: error.details
+      });
+      throw error;
+    }
 
+    console.log(`[DEBUG] Datos históricos obtenidos: ${data.length} registros`);
     res.json({ 
       success: true, 
       data,
@@ -173,10 +206,15 @@ router.get('/:id/datos', async (req, res) => {
       period_hours: hours
     });
   } catch (error) {
-    console.error('Error obteniendo datos históricos:', error);
+    console.error('[ERROR] Error obteniendo datos históricos:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
     res.status(500).json({ 
       success: false, 
-      error: error.message 
+      error: error.message,
+      details: process.env.NODE_ENV === 'production' ? undefined : error.stack
     });
   }
 });
@@ -185,6 +223,7 @@ router.get('/:id/datos', async (req, res) => {
 router.get('/:id/estado', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`[DEBUG] Obteniendo estado para maceta: ${id}`);
 
     // Obtener última lectura
     const { data: lectura, error: lecturaError } = await supabase
@@ -195,7 +234,14 @@ router.get('/:id/estado', async (req, res) => {
       .limit(1)
       .single();
 
-    if (lecturaError && lecturaError.code !== 'PGRST116') throw lecturaError;
+    if (lecturaError && lecturaError.code !== 'PGRST116') {
+      console.error('[ERROR] Error obteniendo lectura:', {
+        message: lecturaError.message,
+        code: lecturaError.code,
+        details: lecturaError.details
+      });
+      throw lecturaError;
+    }
 
     // Obtener último riego
     const { data: riego, error: riegoError } = await supabase
@@ -206,8 +252,16 @@ router.get('/:id/estado', async (req, res) => {
       .limit(1)
       .single();
 
-    if (riegoError && riegoError.code !== 'PGRST116') throw riegoError;
+    if (riegoError && riegoError.code !== 'PGRST116') {
+      console.error('[ERROR] Error obteniendo riego:', {
+        message: riegoError.message,
+        code: riegoError.code,
+        details: riegoError.details
+      });
+      throw riegoError;
+    }
 
+    console.log(`[DEBUG] Estado obtenido - Lectura: ${lectura ? 'Sí' : 'No'}, Riego: ${riego ? 'Sí' : 'No'}`);
     res.json({ 
       success: true, 
       data: {
@@ -216,10 +270,15 @@ router.get('/:id/estado', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error obteniendo estado:', error);
+    console.error('[ERROR] Error obteniendo estado:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
     res.status(500).json({ 
       success: false, 
-      error: error.message 
+      error: error.message,
+      details: process.env.NODE_ENV === 'production' ? undefined : error.stack
     });
   }
 });
