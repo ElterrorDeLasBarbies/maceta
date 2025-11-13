@@ -5,8 +5,8 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: "./render-build.sh"
-    startCommand: "cd backend && NODE_ENV=production node server.js"
+    buildCommand: "chmod +x render-build.sh && ./render-build.sh"
+    startCommand: "NODE_ENV=production node backend/server.js"
     envVars:
       - key: NODE_ENV
         value: production

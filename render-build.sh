@@ -2,13 +2,30 @@
 # Render Build Script
 set -e
 
-echo "📦 Instalando dependencias del backend..."
-cd backend && npm install --production=false
+echo "🏗️  Starting build process..."
+echo "📍 Current directory: $(pwd)"
+echo "📂 Listing files:"
+ls -la
 
-echo "📦 Instalando dependencias del frontend (incluyendo devDependencies)..."
-cd ../frontend && npm install --production=false
+echo ""
+echo "📦 Installing backend dependencies..."
+cd backend
+npm ci --production=false
+cd ..
 
-echo "🏗️  Construyendo frontend..."
+echo ""
+echo "📦 Installing frontend dependencies..."
+cd frontend
+npm ci --production=false
+
+echo ""
+echo "🏗️  Building frontend..."
 npm run build
+cd ..
 
-echo "✅ Build completado!"
+echo ""
+echo "✅ Build completed successfully!"
+echo "📂 Backend directory:"
+ls -la backend/
+echo "📂 Frontend dist directory:"
+ls -la frontend/dist/ || echo "⚠️  dist folder not found"
