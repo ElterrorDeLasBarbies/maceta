@@ -17,7 +17,12 @@ const char* WIFI_PASSWORD = "4533865a"; // ← Cambia esto
 // ======================================
 // CONFIGURACIÓN Backend
 // ======================================
-const char* API_URL = "http://192.168.5.12:3000/api/sensor-data";
+// 🚀 PRODUCCIÓN - Render Cloud
+const char* API_URL = "https://maceta-pro.onrender.com/api/sensor-data";
+
+// 🏠 LOCAL (descomenta para desarrollo local)
+// const char* API_URL = "http://192.168.5.12:3000/api/sensor-data";
+
 const char* MACETA_ID = "e74bd846-59e4-4f7b-aa4d-5478dd8c31fd"; // Maceta 1 - Sala
 
 // ======================================
