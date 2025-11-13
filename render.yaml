@@ -1,0 +1,18 @@
+services:
+  # Backend + Frontend
+  - type: web
+    name: maceta-iot
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: "./render-build.sh"
+    startCommand: "cd backend && NODE_ENV=production node server.js"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
